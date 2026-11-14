@@ -162,10 +162,10 @@ bitmap_mark (struct bitmap *b, size_t bit_idx)
   size_t idx = elem_idx (bit_idx);
   elem_type mask = bit_mask (bit_idx);
 
-  /* This is equivalent to `b->bits[idx] |= mask' except that it
-     is guaranteed to be atomic on a uniprocessor machine.  See
-     the description of the OR instruction in [IA32-v2b]. */
-  asm ("orl %k1, %k0" : "=m" (b->bits[idx]) : "r" (mask) : "cc");
+  /* Pintos 원본은 x86 `orl %k` 인라인 어셈블리를 썼는데, %k는 32비트 연산이라
+     elem_type(unsigned long)이 64비트인 환경에서는 32~63번 비트가 무시된다.
+     사용자 프로그램에서는 원자성이 필요 없으므로 C 연산으로 대체한다. */
+  b->bits[idx] |= mask;
 }
 
 /* Atomically sets the bit numbered BIT_IDX in B to false. */
@@ -175,10 +175,8 @@ bitmap_reset (struct bitmap *b, size_t bit_idx)
   size_t idx = elem_idx (bit_idx);
   elem_type mask = bit_mask (bit_idx);
 
-  /* This is equivalent to `b->bits[idx] &= ~mask' except that it
-     is guaranteed to be atomic on a uniprocessor machine.  See
-     the description of the AND instruction in [IA32-v2a]. */
-  asm ("andl %k1, %k0" : "=m" (b->bits[idx]) : "r" (~mask) : "cc");
+  /* bitmap_mark()의 주석 참고 (64비트에서 원본 `andl %k`는 상위 32비트를 무시) */
+  b->bits[idx] &= ~mask;
 }
 
 /* Atomically toggles the bit numbered IDX in B;
@@ -190,10 +188,8 @@ bitmap_flip (struct bitmap *b, size_t bit_idx)
   size_t idx = elem_idx (bit_idx);
   elem_type mask = bit_mask (bit_idx);
 
-  /* This is equivalent to `b->bits[idx] ^= mask' except that it
-     is guaranteed to be atomic on a uniprocessor machine.  See
-     the description of the XOR instruction in [IA32-v2b]. */
-  asm ("xorl %k1, %k0" : "=m" (b->bits[idx]) : "r" (mask) : "cc");
+  /* bitmap_mark()의 주석 참고 (64비트에서 원본 `xorl %k`는 상위 32비트를 무시) */
+  b->bits[idx] ^= mask;
 }
 
 /* Returns the value of the bit numbered IDX in B. */

@@ -1,0 +1,4 @@
+*.o
+testlib
+.vscode/
+.DS_Store
