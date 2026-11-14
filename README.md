@@ -38,13 +38,13 @@ $ printf 'create list L\nlist_push_back L 3\nlist_push_back L 1\nlist_push_back 
   - `bitmap_expand`: 기존 비트를 유지한 채 비트맵 크기를 늘림 (bitmap.c)
 - 리스트와 해시 원소는 Pintos 방식대로 `list_elem`, `hash_elem`을 구조체 안에 넣고 `list_entry`/`hash_entry`로 꺼냅니다.
 
-## 64비트 환경 호환
+## 64비트 비트맵 버그 수정
 
 Pintos 원본 `bitmap.c`는 `bitmap_mark`·`bitmap_reset`·`bitmap_flip`에 x86 32비트 인라인 어셈블리(`orl %k`, `andl %k`, `xorl %k`)를 씁니다.
 비트를 담는 단위인 `unsigned long`이 64비트인 환경에서는 이 명령이 하위 32비트만 다뤄서, **각 64비트 단위의 32~63번 비트를 조작할 수 없었습니다.**
-같은 의미의 C 연산(`|=`, `&= ~`, `^=`)으로 바꿔서 x86_64와 ARM(Apple Silicon) 모두에서 같은 결과가 나오도록 했습니다.
+같은 의미의 C 연산(`|=`, `&= ~`, `^=`)으로 바꿔서 모든 비트가 정상적으로 동작하도록 했습니다.
 
 ```
 create bitmap B 64 → bitmap_mark B 40 → bitmap_test B 40
-원본(x86_64):  false     수정 후(x86_64, arm64):  true
+수정 전:  false     수정 후:  true
 ```
